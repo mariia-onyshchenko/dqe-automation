@@ -1,8 +1,11 @@
+import os
 import pytest
 from src.connectors.postgres.postgres_connector import PostgresConnectorContextManager
 from src.connectors.file_system.parquet_reader import ParquetReader
 from src.data_quality.data_quality_validation_library import DataQualityLibrary
-from data_dev.config import parquet_storage_config
+
+# Use environment variable or default local folder
+PARQUET_ROOT = os.environ.get("PARQUET_ROOT", "parquet_data")
 
 def pytest_addoption(parser):
     parser.addoption("--db_host", action="store", default="localhost", help="Database host")
@@ -55,18 +58,18 @@ def data_quality_library():
 
 @pytest.fixture(scope="module")
 def facility_name_min_time_spent_per_visit_date_data(parquet_reader):
-    path = parquet_storage_config.storage_path_facility_name_min_time_spent_per_visit_date
+    path = os.path.join(PARQUET_ROOT, "facility_name_min_time_spent_per_visit_date")
     df = parquet_reader.process(path, include_subfolders=True)
     return df
 
 @pytest.fixture(scope="module")
 def facility_type_avg_time_spent_per_visit_date_data(parquet_reader):
-    path = parquet_storage_config.storage_path_facility_type_avg_time_spent_per_visit_date
+    path = os.path.join(PARQUET_ROOT, "facility_type_avg_time_spent_per_visit_date")
     df = parquet_reader.process(path, include_subfolders=True)
     return df
 
 @pytest.fixture(scope="module")
 def patient_sum_treatment_cost_per_facility_type_data(parquet_reader):
-    path = parquet_storage_config.storage_path_patient_sum_treatment_cost_per_facility_type
+    path = os.path.join(PARQUET_ROOT, "patient_sum_treatment_cost_per_facility_type")
     df = parquet_reader.process(path, include_subfolders=True)
     return df

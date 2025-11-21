@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        // other environment variables if needed
-    }
+    PARQUET_ROOT = "${env.WORKSPACE}/parquet_data"
+        }
 
     stages {
         stage('Checkout SCM') {
@@ -40,7 +40,7 @@ pipeline {
                             --db_name=mydatabase \
                             --db_user=$DB_USER \
                             --db_password=$DB_PASSWORD \
-                            --parquet_root=../parquet_data \
+                            --parquet_root=$PARQUET_ROOT \
                             --html=html_report/report.html
                     '''
                 }
