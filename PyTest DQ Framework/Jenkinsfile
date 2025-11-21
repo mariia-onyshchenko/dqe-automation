@@ -2,49 +2,50 @@ pipeline {
     agent any
 
     environment {
-        // This injects both username and password as separate env vars
         POSTGRES_SECRET = credentials('jenkins-postgres-credentials')
     }
 
     stages {
+
         stage('Install Dependencies') {
             steps {
-                sh '''
-                    # Move to repo root
-                    cd "PyTest DQ Framework"
+                sh """
+                    cd 'PyTest DQ Framework'
                     
                     # Create virtual environment
-                    python3 -m venv venv
-                    
-                    # Upgrade pip and install requirements
-                    ./venv/bin/pip install --upgrade pip
-                    ./venv/bin/pip install -r requirements.txt
-                '''
+                    python3 -m venv ../venv
+
+                    # Upgrade pip
+                    ../venv/bin/pip install --upgrade pip
+
+                    # Install requirements
+                    ../venv/bin/pip install -r requirements.txt
+                """
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh '''
-                    cd "PyTest DQ Framework"
+                sh """
+                    cd 'PyTest DQ Framework'
 
-                    # Run pytest using the virtual environment
-                    ./venv/bin/pytest tests -m "parquet_data" \
+                    # Add workspace root to PYTHONPATH so Python can find data_dev
+                    export PYTHONPATH=\$PYTHONPATH:\$(pwd)/..
+
+                    # Run pytest with virtualenv Python
+                    ../venv/bin/python -m pytest tests -m "parquet_data" \
                         --db_host="postgres" \
                         --db_port="5432" \
                         --db_name="mydatabase" \
-                        --db_user="$POSTGRES_SECRET_USR" \
-                        --db_password="$POSTGRES_SECRET_PSW" \
+                        --db_user=$POSTGRES_SECRET_USR \
+                        --db_password=$POSTGRES_SECRET_PSW \
                         --html=html_report/report.html
-                '''
+                """
             }
         }
 
         stage('Archive Test Report') {
             steps {
-                sh 'cd "PyTest DQ Framework"'
-
-                // Archive HTML report
                 archiveArtifacts artifacts: 'PyTest DQ Framework/html_report/**', allowEmptyArchive: true
 
                 publishHTML(target: [
