@@ -2,49 +2,62 @@ pipeline {
     agent any
 
     environment {
-        POSTGRES_SECRET = credentials('jenkins-postgres-credentials')
+        // Keep credentials masked
+        DB_USER = credentials('POSTGRES_USER_CRED_ID')
+        DB_PASSWORD = credentials('POSTGRES_PASS_CRED_ID')
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: 'main']],
+                    userRemoteConfigs: [[url: 'https://github.com/mariia-onyshchenko/dqe-automation.git']]
+                ])
+            }
+        }
+
         stage('Install Dependencies') {
             steps {
                 dir('PyTest DQ Framework') {
-                    sh """
+                    sh '''
                         python3 -m venv venv
                         ./venv/bin/pip install --upgrade pip
                         ./venv/bin/pip install -r requirements.txt
-                    """
+                    '''
                 }
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh """
-                    PyTest_DQ_PATH="PyTest DQ Framework"
-                    $PyTest_DQ_PATH/venv/bin/pytest $WORKSPACE/tests -m "parquet_data" \\
-                        --db_host="postgres" \\
-                        --db_port="5432" \\
-                        --db_name="mydatabase" \\
-                        --db_user=$POSTGRES_SECRET_USR \\
-                        --db_password=$POSTGRES_SECRET_PSW \\
-                        --html=$PyTest_DQ_PATH/html_report/report.html
-                """
+                // Run pytest from workspace root, so parquet_data is accessible
+                sh '''
+                    "PyTest DQ Framework/venv/bin/pytest" tests -m "parquet_data" \\
+                        --db_host=postgres \\
+                        --db_port=5432 \\
+                        --db_name=mydatabase \\
+                        --db_user=$DB_USER \\
+                        --db_password=$DB_PASSWORD \\
+                        --html="PyTest DQ Framework/html_report/report.html"
+                '''
             }
         }
 
         stage('Archive Test Report') {
             steps {
-                archiveArtifacts artifacts: 'PyTest DQ Framework/html_report/**', allowEmptyArchive: true
-
-                publishHTML(target: [
-                    allowMissing: false,
-                    keepAll: true,
-                    reportDir: 'PyTest DQ Framework/html_report',
-                    reportFiles: 'report.html',
-                    reportName: 'HTML Test Report'
-                ])
+                archiveArtifacts artifacts: 'PyTest DQ Framework/html_report/report.html', allowEmptyArchive: true
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline finished.'
+        }
+        failure {
+            echo 'Pipeline failed. Check the HTML report for details.'
         }
     }
 }
