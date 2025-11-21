@@ -2,19 +2,13 @@ pipeline {
     agent any
 
     environment {
-        // Keep credentials masked
-        DB_USER = credentials('POSTGRES_USER_CRED_ID')
-        DB_PASSWORD = credentials('POSTGRES_PASS_CRED_ID')
+        // other environment variables if needed
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout SCM') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: 'main']],
-                    userRemoteConfigs: [[url: 'https://github.com/mariia-onyshchenko/dqe-automation.git']]
-                ])
+                checkout scm
             }
         }
 
@@ -32,32 +26,40 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                // Run pytest from workspace root, so parquet_data is accessible
-                sh '''
-                    "PyTest DQ Framework/venv/bin/pytest" tests -m "parquet_data" \\
-                        --db_host=postgres \\
-                        --db_port=5432 \\
-                        --db_name=mydatabase \\
-                        --db_user=$DB_USER \\
-                        --db_password=$DB_PASSWORD \\
-                        --html="PyTest DQ Framework/html_report/report.html"
-                '''
+                withCredentials([usernamePassword(
+                    credentialsId: 'jenkins-postgres-credentials',
+                    usernameVariable: 'DB_USER',
+                    passwordVariable: 'DB_PASSWORD'
+                )]) {
+                    sh '''
+                        cd PyTest DQ Framework
+                        ./venv/bin/pytest tests \
+                            -m parquet_data \
+                            --db_host=postgres \
+                            --db_port=5432 \
+                            --db_name=mydatabase \
+                            --db_user=$DB_USER \
+                            --db_password=$DB_PASSWORD \
+                            --parquet_root=../parquet_data \
+                            --html=html_report/report.html
+                    '''
+                }
             }
         }
 
         stage('Archive Test Report') {
             steps {
-                archiveArtifacts artifacts: 'PyTest DQ Framework/html_report/report.html', allowEmptyArchive: true
+                archiveArtifacts artifacts: 'PyTest DQ Framework/html_report/*.html', allowEmptyArchive: true
             }
         }
     }
 
     post {
         always {
-            echo 'Pipeline finished.'
+            echo "Pipeline finished."
         }
         failure {
-            echo 'Pipeline failed. Check the HTML report for details.'
+            echo "Pipeline failed. Check the HTML report for details."
         }
     }
 }
