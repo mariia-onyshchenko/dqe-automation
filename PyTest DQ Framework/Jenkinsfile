@@ -50,6 +50,7 @@ pipeline {
                         --db_user=$DB_USER \
                         --db_password=$DB_PASSWORD \
                         --parquet_root="$PARQUET_ROOT" \
+                        --capture=tee-sys \
                         --html=html_report/report.html 
                 '''
             }
