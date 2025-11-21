@@ -25,30 +25,39 @@ pipeline {
         }
 
         stage('Run Tests') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'jenkins-postgres-credentials',
-                    usernameVariable: 'DB_USER',
-                    passwordVariable: 'DB_PASSWORD'
-                )]) {
-                    sh '''
-                        cd "$WORKSPACE/PyTest DQ Framework"
-                            ./venv/bin/pytest tests \
-                                -m parquet_data \
-                                -vv \
-                                --log-cli-level=INFO \
-                                --maxfail=999 \
-                                --db_host=postgres \
-                                --db_port=5432 \
-                                --db_name=mydatabase \
-                                --db_user=$DB_USER \
-                                --db_password=$DB_PASSWORD \
-                                --parquet_root="$WORKSPACE/parquet_data" \
-                                --html=html_report/report.html
-                    '''
-                }
+    steps {
+        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+            withCredentials([usernamePassword(
+                credentialsId: 'jenkins-postgres-credentials',
+                usernameVariable: 'DB_USER',
+                passwordVariable: 'DB_PASSWORD'
+            )]) {
+                sh '''
+                    cd "$WORKSPACE/PyTest DQ Framework"
+
+                    rm -rf html_report
+                    mkdir -p html_report
+
+                    ./venv/bin/pytest tests \
+                        -m parquet_data \
+                        -vv \
+                        --log-cli-level=INFO \
+                        --maxfail=999 \
+                        --disable-warnings \
+                        --db_host=postgres \
+                        --db_port=5432 \
+                        --db_name=mydatabase \
+                        --db_user=$DB_USER \
+                        --db_password=$DB_PASSWORD \
+                        --parquet_root="$PARQUET_ROOT" \
+                        --html=html_report/report.html \
+                        --self-contained-html || true
+                '''
             }
         }
+    }
+}
+
 
         stage('Archive Test Report') {
             steps {
