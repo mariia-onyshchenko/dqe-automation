@@ -8,26 +8,29 @@ pipeline {
     stages {
         stage('Install Dependencies') {
             steps {
-                sh """
+                sh '''
+                    #!/bin/bash
                     python3 -m venv venv
                     source venv/bin/activate
+                    pip install --upgrade pip
                     pip install -r requirements.txt
-                """
+                '''
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh """
+                sh '''
+                    #!/bin/bash
                     source venv/bin/activate
                     pytest tests -m "parquet_data" \
                         --db_host="postgres" \
                         --db_port="5432" \
                         --db_name="mydatabase" \
-                        --db_user=$POSTGRES_SECRET_USR \
-                        --db_password=$POSTGRES_SECRET_PSW \
+                        --db_user="$POSTGRES_SECRET_USR" \
+                        --db_password="$POSTGRES_SECRET_PSW" \
                         --html=html_report/report.html
-                """
+                '''
             }
         }
 
