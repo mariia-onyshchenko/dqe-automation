@@ -37,6 +37,7 @@ pipeline {
                                 -m parquet_data \
                                 -vv \
                                 --log-cli-level=INFO \
+                                --maxfail=999 \
                                 --db_host=postgres \
                                 --db_port=5432 \
                                 --db_name=mydatabase \
