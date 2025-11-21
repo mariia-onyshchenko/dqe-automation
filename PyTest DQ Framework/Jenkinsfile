@@ -32,15 +32,16 @@ pipeline {
                     passwordVariable: 'DB_PASSWORD'
                 )]) {
                     sh '''
-                        cd "PyTest DQ Framework"
-                        ./venv/bin/pytest tests \
-                            -m parquet_data \
-                            --db_host=postgres \
-                            --db_port=5432 \
-                            --db_name=mydatabase \
-                            --db_user="${DB_USER}" \
-                            --db_password="${DB_PASSWORD}" \
-                            --html=html_report/report.html
+                        cd "$WORKSPACE/PyTest DQ Framework"
+                            ./venv/bin/pytest tests \
+                                -m parquet_data \
+                                --db_host=postgres \
+                                --db_port=5432 \
+                                --db_name=mydatabase \
+                                --db_user=$DB_USER \
+                                --db_password=$DB_PASSWORD \
+                                --parquet_root="$WORKSPACE/parquet_data" \
+                                --html=html_report/report.html
                     '''
                 }
             }
