@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+        // This injects both username and password as separate env vars
         POSTGRES_SECRET = credentials('jenkins-postgres-credentials')
     }
 
@@ -9,7 +10,13 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
+                    # Move to repo root
+                    cd "PyTest DQ Framework"
+                    
+                    # Create virtual environment
                     python3 -m venv venv
+                    
+                    # Upgrade pip and install requirements
                     ./venv/bin/pip install --upgrade pip
                     ./venv/bin/pip install -r requirements.txt
                 '''
@@ -19,6 +26,9 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh '''
+                    cd "PyTest DQ Framework"
+
+                    # Run pytest using the virtual environment
                     ./venv/bin/pytest tests -m "parquet_data" \
                         --db_host="postgres" \
                         --db_port="5432" \
@@ -32,7 +42,10 @@ pipeline {
 
         stage('Archive Test Report') {
             steps {
-                archiveArtifacts artifacts: 'html_report/**', allowEmptyArchive: true
+                sh 'cd "PyTest DQ Framework"'
+
+                // Archive HTML report
+                archiveArtifacts artifacts: 'PyTest DQ Framework/html_report/**', allowEmptyArchive: true
 
                 publishHTML(target: [
                     allowMissing: false,
