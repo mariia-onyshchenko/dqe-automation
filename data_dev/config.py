@@ -98,8 +98,8 @@ postgres_config = PostgresConfig(
     user='myuser',
     password='mypassword',
     db='mydatabase',
-    port=5432,  # localhost:5434,  podman_network:5432
-    host='postgres'  # localhost:localhost, podman_network:postgres
+    port=5434,  # localhost:5434,  podman_network:5432
+    host='localhost'  # localhost:localhost, podman_network:postgres
 )
 
 # Instance of GeneratorConfig
@@ -114,12 +114,9 @@ data_generator_config = DataGeneratorConfig(
 
 # Instance of ParquetStorageConfig
 parquet_storage_config = ParquetStorageConfig(
-    storage_path_facility_type_avg_time_spent_per_visit_date='/parquet_data/'
-                                                             'facility_type_avg_time_spent_per_visit_date',
-    storage_path_patient_sum_treatment_cost_per_facility_type='/parquet_data/'
-                                                              'patient_sum_treatment_cost_per_facility_type',
-    storage_path_facility_name_min_time_spent_per_visit_date='/parquet_data/'
-                                                             'facility_name_min_time_spent_per_visit_date'
+    storage_path_facility_type_avg_time_spent_per_visit_date='parquet_data/facility_type_avg_time_spent_per_visit_date',
+    storage_path_patient_sum_treatment_cost_per_facility_type='parquet_data/patient_sum_treatment_cost_per_facility_type',
+    storage_path_facility_name_min_time_spent_per_visit_date='parquet_data/facility_name_min_time_spent_per_visit_date'
 )
 
 # Instance of ReportGeneratorConfig
