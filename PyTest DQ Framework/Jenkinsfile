@@ -6,40 +6,29 @@ pipeline {
     }
 
     stages {
-
         stage('Install Dependencies') {
             steps {
-                sh """
-                    cd 'PyTest DQ Framework'
-                    
-                    # Create virtual environment
-                    python3 -m venv ../venv
-
-                    # Upgrade pip
-                    ../venv/bin/pip install --upgrade pip
-
-                    # Install requirements
-                    ../venv/bin/pip install -r requirements.txt
-                """
+                dir('PyTest DQ Framework') {
+                    sh """
+                        python3 -m venv venv
+                        ./venv/bin/pip install --upgrade pip
+                        ./venv/bin/pip install -r requirements.txt
+                    """
+                }
             }
         }
 
         stage('Run Tests') {
             steps {
                 sh """
-                    cd 'PyTest DQ Framework'
-
-                    # Add workspace root to PYTHONPATH so Python can find data_dev
-                    export PYTHONPATH=\$PYTHONPATH:\$(pwd)/..
-
-                    # Run pytest with virtualenv Python
-                    ../venv/bin/python -m pytest tests -m "parquet_data" \
-                        --db_host="postgres" \
-                        --db_port="5432" \
-                        --db_name="mydatabase" \
-                        --db_user=$POSTGRES_SECRET_USR \
-                        --db_password=$POSTGRES_SECRET_PSW \
-                        --html=html_report/report.html
+                    PyTest_DQ_PATH="PyTest DQ Framework"
+                    $PyTest_DQ_PATH/venv/bin/pytest $WORKSPACE/tests -m "parquet_data" \\
+                        --db_host="postgres" \\
+                        --db_port="5432" \\
+                        --db_name="mydatabase" \\
+                        --db_user=$POSTGRES_SECRET_USR \\
+                        --db_password=$POSTGRES_SECRET_PSW \\
+                        --html=$PyTest_DQ_PATH/html_report/report.html
                 """
             }
         }
