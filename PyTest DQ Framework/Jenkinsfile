@@ -32,7 +32,7 @@ pipeline {
                     passwordVariable: 'DB_PASSWORD'
                 )]) {
                     sh '''
-                        cd PyTest DQ Framework
+                        cd "$WORKSPACE/PyTest DQ Framework"
                         ./venv/bin/pytest tests \
                             -m parquet_data \
                             --db_host=postgres \
